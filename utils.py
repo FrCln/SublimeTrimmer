@@ -104,7 +104,7 @@ def trim_line(line):
         while s.startswith(' '):
             s = s[1:]
         fragment = ' ' * (idn + 4) + s + '\n'
-        if len(fragment) > 70:
+        if len(fragment) > 78:
             fragment = trim_line(fragment)
         result += fragment
         p = c + 1
