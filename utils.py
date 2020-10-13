@@ -71,23 +71,26 @@ def parse_commas(line, start, end, ignored_fragments):
 
 def main_brackets(line, ignored_fragments):
     brackets = list(parse_brackets(line, ignored_fragments))
-    main = max(
-        filter(lambda x: x[1], brackets),
-        key=lambda x: x[1] - x[0]
-    )
-    inner = sorted(x for x in brackets if main[0] < x[1] < main[1])
-    i = 1
-    while i < len(inner):
-        if inner[i - 1][1] > inner[i][0]:
-            inner.pop(i)
-        else:
-            i += 1
-    return main, inner
+    if brackets:
+        main = max(
+            filter(lambda x: x[1], brackets),
+            key=lambda x: x[1] - x[0]
+        )
+        inner = sorted(x for x in brackets if main[0] < x[1] < main[1])
+        i = 1
+        while i < len(inner):
+            if inner[i - 1][1] > inner[i][0]:
+                inner.pop(i)
+            else:
+                i += 1
+        return main, inner
+    else:
+        return (0, 0), []
 
 
 def indentetion(line):
     i = 0
-    while line[i] == ' ':
+    while i < len(line) and line[i] == ' ':
         i += 1
     return i
 
@@ -96,17 +99,20 @@ def trim_line(line):
     idn = indentetion(line)
     ignored_fragments = sorted(list(parse_strings(line)))
     (start, end), inner = main_brackets(line, ignored_fragments)
-    ignored_fragments = sorted(ignored_fragments + inner)
-    p = start + 1
-    result = line[:p] + '\n'
-    for c in list(parse_commas(line, start, end, ignored_fragments)) + [end - 1]:
-        s = line[p:c + 1]
-        while s.startswith(' '):
-            s = s[1:]
-        fragment = ' ' * (idn + 4) + s + '\n'
-        if len(fragment) > 78:
-            fragment = trim_line(fragment)
-        result += fragment
-        p = c + 1
-    result += ' ' * idn + line[end:]
+    if end != start:
+        ignored_fragments = sorted(ignored_fragments + inner)
+        p = start + 1
+        result = line[:p] + '\n'
+        for c in list(parse_commas(line, start, end, ignored_fragments)) + [end - 1]:
+            s = line[p:c + 1]
+            while s.startswith(' '):
+                s = s[1:]
+            fragment = ' ' * (idn + 4) + s + '\n'
+            if len(fragment) > 78:
+                fragment = trim_line(fragment)
+            result += fragment
+            p = c + 1
+        result += ' ' * idn + line[end:]
+    else:
+        result = line
     return result
