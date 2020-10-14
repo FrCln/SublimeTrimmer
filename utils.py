@@ -2,6 +2,73 @@ class BracketsError(Exception):
     pass
 
 
+def is_comment(line):
+    return line.strip().startswith('#')
+
+
+def trim_comment(line):
+    result = ''
+    idn = indentetion(line)
+    words = line.split()
+    if words[0] == '#':
+        words.pop(0)
+    else:
+        raise ValueError('not a comment')
+    prefix = ' ' * idn + '#' + ' '
+    start = 0
+    for i in range(len(words)):
+        if i > start + 1 and len(' '.join(words[start : i])) > 78 - idn:
+            result += prefix + ' '.join(words[start : i - 1]) + '\n'
+            start = i - 1
+    return result + prefix + ' '.join(words[start:]) + '\n'
+
+
+def find_docstrings(document):
+    quotes = ['"""', "'''"]
+    p = ''
+    i = 0
+    start = 0
+    while i < len(document) - 2:
+        c = document[i : i + 3]
+        if p:
+            if document[i] == '\\':
+                i += 1
+            elif c == p:
+                # Closing quote
+                p = ''
+                if c in quotes:
+                    # Docstring finishes
+                    yield start, i + 3
+            elif c[0] == p:
+                p = ''
+        else:
+            if c in quotes:
+                # Docstring starts
+                p = c
+                start = i
+                while start > 0 and document[start - 1] != '\n':
+                    start -= 1
+                i += 2
+            elif c[0] in '\'\"':
+                p = c[0]
+        i += 1
+
+
+def trim_docstring(text):
+    result = ''
+    for line in text.splitlines():
+        idn = indentetion(line)
+        words = line.split()
+        prefix = ' ' * idn
+        start = 0
+        for i in range(len(words)):
+            if i > start + 1 and len(' '.join(words[start : i])) > 80 - idn:
+                result += prefix + ' '.join(words[start : i - 1]) + '\n'
+                start = i - 1
+        result += prefix + ' '.join(words[start:]) + '\n'
+    return result
+
+
 def parse_strings(line):
     strings = []
     stack = []
@@ -96,6 +163,8 @@ def indentetion(line):
 
 
 def trim_line(line):
+    if is_comment(line):
+        return trim_comment(line)
     idn = indentetion(line)
     ignored_fragments = sorted(list(parse_strings(line)))
     (start, end), inner = main_brackets(line, ignored_fragments)
@@ -108,7 +177,7 @@ def trim_line(line):
             while s.startswith(' '):
                 s = s[1:]
             fragment = ' ' * (idn + 4) + s + '\n'
-            if len(fragment) > 78:
+            if len(fragment) > 80:
                 fragment = trim_line(fragment)
             result += fragment
             p = c + 1
