@@ -1,5 +1,5 @@
 # SublimeTrimmer
- SublimeText3 Plugin for formatting long lines in Python code.
+ SublimeText3 Plugin for formatting long lines in Python code. Works with brackets expressions and docstrings.
  
 # Example
 If there is such a line in some code, which is longer than 80 symbols required by PEP8:
