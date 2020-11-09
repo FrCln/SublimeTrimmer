@@ -10,7 +10,7 @@ def trim_comment(line):
     result = ''
     idn = indentetion(line)
     words = line.split()
-    if words[0] == '#':
+    if words[0] == '#': # FIXIT .startswith
         words.pop(0)
     else:
         raise ValueError('not a comment')
